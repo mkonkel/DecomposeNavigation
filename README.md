@@ -148,4 +148,77 @@ The ***Value*** is a type that represents a value that can be observed is the De
 With all things done, we can now handle the actual navigation, following the [documentation](https://arkivanov.github.io/Decompose/navigation/stack/overview/#delivering-a-result-when-navigating-back) we can handle it with multiple ways - with traditional callbacks or with a bit more reactive approach with `flow` or `observable`. It's all upon to yuo how you want to communicate child components with the root component.
 You can also create a global ***navigation*** object that will be responsible for changing the screens from any place in the app, there is no good or bad practice. For the simplification of the example, I will use the callbacks.
 
+In the ***firstScreen*** I will add a lambda expression on `onButtonClick: (String) -> Unit` that will be called when the button is clicked. The lambda will be called with the greetings text, and handled in the ***RootComponent***.
 
+```kotlin
+class FirstScreenComponent(
+    componentContext: ComponentContext,
+    private val onButtonClick: (String) -> Unit,
+) : ComponentContext by componentContext {
+
+    fun click() {
+        onButtonClick("Hello from FirstScreenComponent!")
+    }
+}
+```
+Now I need to implement the callback and handle the navigation.
+
+```kotlin
+    @OptIn(ExperimentalDecomposeApi::class)
+    private fun createChild(configuration: Configuration, componentContext: ComponentContext): Child =
+    when (configuration) {
+        is Configuration.FirstScreen -> {
+            Child.FirstScreen(
+                component = FirstScreenComponent(
+                    componentContext = componentContext,
+                    onButtonClick = { textFromFirstScreen ->
+                        navigation.pushNew(Configuration.SecondScreen(text = textFromFirstScreen))
+                    }
+                )
+            )
+        }
+        ...
+    }
+```
+
+The ***Decompose*** gives a plenty wat of starting new screen:
+- `push(configuration)` - pushes new screen to top of the stack
+- `pushNew(configuration)` - pushes new screen to top of the stack, does nothing if configuration already on the top of stack
+- `pushToFront(configuration)` - pushes the provided configuration to the top of the stack, removing the configuration from the back stack, if any
+- `pop()` - pops the latest configuration at the top of the stack.
+- and more, that are described [here](https://arkivanov.github.io/Decompose/navigation/stack/navigation/#stacknavigator-extension-functions)
+
+Same approach can be used to handle the back button, the ***handleBackButton*** parameter in the ***childStack*** is responsible for that. If the back button is pressed the ***childStack*** will pop the latest configuration from the stack.
+
+```kotlin
+class SecondScreenComponent(
+    componentContext: ComponentContext,
+    private val text: String,
+    private val onBackButtonClick: () -> Unit
+) : ComponentContext by componentContext {
+    fun getGreeting(): String = text
+    fun goBack() {
+        onBackButtonClick()
+    }
+}
+```
+
+```kotlin
+    @OptIn(ExperimentalDecomposeApi::class)
+    private fun createChild(configuration: Configuration, componentContext: ComponentContext): Child =
+        when (configuration) {
+            ...
+            is Configuration.SecondScreen -> Child.SecondScreen(
+                component = SecondScreenComponent(
+                    componentContext = componentContext,
+                    text = configuration.text,
+                    onBackButtonClick = { navigation.pop() }
+                )
+            )
+        }
+```
+
+The whole navigation is now completed, and it is independent of th UI, it's pure kotlin and in shared code, and can be unit tested.
+The last thing to do is to create the UI for the screens. 
+
+```kotlin

@@ -3,7 +3,11 @@ package navigation
 import com.arkivanov.decompose.ComponentContext
 
 class FirstScreenComponent(
-    componentContext: ComponentContext
+    componentContext: ComponentContext,
+    private val onButtonClick: (String) -> Unit,
 ) : ComponentContext by componentContext {
-    // Some code here
+
+    fun click() {
+        onButtonClick("Hello from FirstScreenComponent!")
+    }
 }

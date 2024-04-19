@@ -12,7 +12,7 @@ class RootComponent(
     componentContext: ComponentContext
 ) : ComponentContext by componentContext {
     private val navigation = StackNavigation<Configuration>()
-    private val childStack = childStack(
+    val childStack = childStack(
         source = navigation,
         serializer = Configuration.serializer(),
         initialConfiguration = Configuration.FirstScreen,

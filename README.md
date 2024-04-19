@@ -121,13 +121,13 @@ The last thing to do is to create the ***childStack***. The childStack requires 
 The ***childFactory*** is a function that creates the child component based on the configuration and component context. The childStack is responsible for creating the child components and managing their lifecycle.
 
 ```kotlin
-    private val childStack = childStack(
-    source = navigation,
-    serializer = Configuration.serializer(),
-    initialConfiguration = Configuration.FirstScreen,
-    handleBackButton = true,
-    childFactory = ::createChild
-)
+    val childStack = childStack(
+        source = navigation,
+        serializer = Configuration.serializer(),
+        initialConfiguration = Configuration.FirstScreen,
+        handleBackButton = true,
+        childFactory = ::createChild
+    )
 ```
 
 ```kotlin
@@ -219,6 +219,116 @@ class SecondScreenComponent(
 ```
 
 The whole navigation is now completed, and it is independent of th UI, it's pure kotlin and in shared code, and can be unit tested.
-The last thing to do is to create the UI for the screens. 
+The last thing to do is to create the UI for the screens. It will be as simple as possible, a column with texts and buttons.
+Each screen will be a `@Composable` function that takes a ***component*** as a parameter.
 
 ```kotlin
+@Composable
+fun FirstScreen(
+    component: FirstScreenComponent
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("First screen")
+        Button(onClick = { component.click() }) {
+            Text("Second Screen")
+        }
+    }
+}
+```
+
+```kotlin
+@Composable
+fun SecondScreen(
+    component: SecondScreenComponent
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("First screen")
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Greetings: ${component.getGreeting()}")
+        Button(onClick = { component.goBack() }) {
+            Text("Go Back")
+        }
+    }
+}   
+```
+
+The buttons are invoking functions that are provided via the components, as we remember that functions will trigger the navigation in our ***rootComponent***.
+
+The entrypoint to our application is the `App` function that will take the `RootComponent` as a parameter and handle the navigation events from the ***childStack***.
+Each platform ***iOS*** and ***Android*** will create the ***rootComponent*** and pass it to the ***App()*** function.
+
+```kotlin
+val childStack = rootComponent.childStack.subscribeAsState()
+```
+
+The decomposes ***Value*** can be transformed to the ***State*** by the `subscribeAsState()` function.
+To handle upcoming changes in the stack the decompose provides special composable function called `Children` that takes stack as a parameter, and can be configured using standard modifiers it also can use different type of transition animations with the `StackAnimation`.
+Last parameter of the ***Children*** function is lambda expression that will be called with every new child on the top of the stack. This is the place where we can say how to display new components.
+
+```kotlin
+@Composable
+fun App(rootComponent: RootComponent) {
+    MaterialTheme {
+        val childStack = rootComponent.childStack.subscribeAsState()
+        Children(
+            stack = childStack.value,
+            animation = stackAnimation(slide()),
+        ) { child ->
+            when (val instance = child.instance) {
+                is RootComponent.Child.FirstScreen ->
+                    FirstScreen(instance.component)
+
+                is RootComponent.Child.SecondScreen ->
+                    SecondScreen(instance.component)
+            }
+        }
+    }
+}
+```
+
+The last thing to to is to create the ***RootComponent*** in the platform specific code and pass it to the ***App()*** function.
+For Android ti will be the `MainActivity` located in the `androidMain` and for iOS the `MainViewController` located in `iosMain`.
+
+For android we should use decomposes `retainedComponent()` function that will create the ***RootComponent*** and retain it during the configuration changes. It also creates the ***componentContext***
+```kotlin
+class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalDecomposeApi::class)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val rootComponent = retainedComponent { componentContext ->
+            RootComponent(
+                componentContext = componentContext
+            )
+        }
+        setContent {
+            App(rootComponent = rootComponent)
+        }
+    }
+}
+```
+
+Since the iOS entry point is a composable function we will need to create ***componentContext*** by ourselves, thankfully decompose got proper functions for it.
+I will use the `DefaultComponentContext()` that takes the ***Lifecycle*** as a parameter which is also created by the part of the decompose lib via the `LifecycleRegistry()`.
+To prevent creating new components on each recomposition we should remember the instantiated component.
+```kotlin
+fun MainViewController() = ComposeUIViewController {
+    val rootComponent = remember {
+        RootComponent(
+            componentContext = DefaultComponentContext(LifecycleRegistry())
+        )
+    }
+
+    App(rootComponent)
+}
+```
+
+Thats all! We can now run the application on both Android and iOS devices and expect same behaviour!

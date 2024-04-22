@@ -1,3 +1,5 @@
+# Decompose Navigation
+
 This is a Kotlin Multiplatform project targeting Android and iOS where we will showcase the Decompose as the app
 navigation.
 
@@ -5,6 +7,8 @@ navigation.
 - Application should allow to pass some parameters from first to second screen.
 - Application should handle the screen rotation without loosing data.
   ...
+
+### The project:
 
 Base project setup as always is made with [Kotlin Multiplatform Wizard](https://kmp.jetbrains.com), we also need to add
 some [Decompose](https://arkivanov.github.io/Decompose/getting-started/installation/#__tabbed_1_2) as it is the core
@@ -395,3 +399,6 @@ fun MainViewController() = ComposeUIViewController {
 That's all! We can now run the application on both Android and iOS devices and expect same behaviour!
 
 ![Navigation](/blog/images/3_navigation.gif "Navigation")
+
+### Summary
+The `Decompose` is a powerful library that can be used in compose multiplatform application that supoorts Android, iOS, WEB and Desktop. It is separated from the UI code and handled by the common shared logic. It's pretty straightforward and easy to use and can be customized to fits your needs. You definitely should give it a try!   

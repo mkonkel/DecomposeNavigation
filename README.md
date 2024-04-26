@@ -4,12 +4,15 @@ This is a Kotlin Multiplatform project targeting Android and iOS where we will s
 navigation.
 
 Assumptions:
+
 - Application should allow us to navigate from one screen to another.
 - Application should allow to pass some parameters from first to second screen.
 - Application should handle the screen rotation without loosing data.
+- Application should handle the Tab Navigation.
   ...
 
-In the next posts I will also cover the [Voyager](https://github.com/mkonkel/VoyagerNavigation), Circuit, Apyx and Composer navigation libraries.
+In the next posts I will also cover the [Voyager](https://github.com/mkonkel/VoyagerNavigation), Circuit, Apyx and
+Composer navigation libraries.
 
 ### The project:
 
@@ -403,5 +406,236 @@ That's all! We can now run the application on both Android and iOS devices and e
 
 ![Navigation](/blog/images/3_navigation.gif "Navigation")
 
+To test it a bit more we can now add the ***Tab Navigation*** to the App. Let's start with creating new screen that will
+have its own ***childStack*** and the entrypoint on the ***firstScreen***.
+The steps that we need to do are same as before the only thing that will change is how to handle child
+creation/navigation in new component.
+
+```kotlin
+class TabNavigationScreen(
+    componentContext: ComponentContext
+) : ComponentContext by componentContext
+```
+
+The `TabNavigationScreen` will behave in almost similar way as the ```RootComponent``` it will have its own
+***childStack***, ***configuration***, ***childFactory*** and will be responsible for creating the child components and
+navigate between them.
+
+```kotlin
+sealed class Child {
+    data class TabOne(val component: ThirdScreenComponent) : Child()
+    data class TabTwo(val component: FourthScreenComponent) : Child()
+}
+
+@Serializable
+sealed class Configuration {
+    @Serializable
+    data object TabOne : Configuration()
+
+    @Serializable
+    data object TabTwo : Configuration()
+}
+```
+
+```kotlin
+class ThirdScreenComponent(
+    componentContext: ComponentContext,
+) : ComponentContext by componentContext {
+    val text = "Hello from ThirdScreen"
+}
+```
+
+```kotlin
+class FourthScreenComponent(
+    componentContext: ComponentContext,
+) : ComponentContext by componentContext {
+    val text = "Hello from FourthScreen"
+}
+```
+
+We need to remember that different ***stacks*** should have their unique keys.
+
+```kotlin
+private val navigation = StackNavigation<TabNavigationComponent.Configuration>()
+val childStack = childStack(
+    source = navigation,
+    serializer = navigation.tab.TabNavigationComponent.Configuration.serializer(),
+    initialConfiguration = navigation.tab.TabNavigationComponent.Configuration.TabOne,
+    handleBackButton = true,
+    childFactory = ::createChild,
+    key = "TabNavigationStack"
+)
+
+@OptIn(ExperimentalDecomposeApi::class)
+private fun createChild(
+    configuration: TabNavigationComponent.Configuration,
+    componentContext: ComponentContext
+): TabNavigationComponent.Child =
+    when (configuration) {
+        is TabNavigationComponent.Configuration.TabOne -> {
+            TabNavigationComponent.Child.TabOne(ThirdScreenComponent(componentContext))
+        }
+
+        is TabNavigationComponent.Configuration.TabTwo -> {
+            TabNavigationComponent.Child.TabTwo(FourthScreenComponent(componentContext))
+        }
+    }
+```
+
+The `TabNavigationComponent` needs to handle tabs clicks. This will be done
+with [bringToFront](https://arkivanov.github.io/Decompose/navigation/stack/navigation/#bringtofrontconfiguration-configuration)
+function.
+
+```kotlin
+    fun onTabOneClick() {
+    navigation.bringToFront(Configuration.TabOne)
+}
+
+fun onTabTwoClick() {
+    navigation.bringToFront(Configuration.TabTwo)
+}
+```
+
+Last thing to to in the Components is to provide a way for running the ***TabNavigationScreen*** from the
+***FirstScreen***.
+
+```kotlin
+class FirstScreenComponent(
+    componentContext: ComponentContext,
+    private val onGoToSecondScreenClick: (String) -> Unit,
+    private val onGoToTabsScreen: () -> Unit,
+) : ComponentContext by componentContext {
+
+    fun newScreen() {
+        onGoToSecondScreenClick("Hello from FirstScreenComponent!")
+    }
+
+    fun tabScreen() {
+        onGoToTabsScreen()
+    }
+}
+```
+
+```kotlin
+class RootComponent(...) {
+
+    private fun createChild(...) {
+        when (configuration) {
+            is Configuration.FirstScreen -> Child.FirstScreen(
+                component = FirstScreenComponent(
+                    onGoToTabsScreen = {
+                        navigation.pushNew(Configuration.TabsNavigation)
+                    }
+                )
+            )
+                ...
+                Configuration.TabsNavigation
+            -> Child.TabsScreen(
+                component = TabNavigationComponent(
+                    componentContext = componentContext
+                )
+            )
+        }
+    }
+
+    sealed class Child {
+        ...
+        data class TabsScreen(val component: TabNavigationComponent) : Child()
+    }
+
+    @Serializable
+    sealed class Configuration {
+        ...
+        @Serializable
+        data object TabsNavigation : Configuration()
+    }
+}
+```
+
+Last thing is to handle the changes on teh UI layer.
+
+```kotlin
+@Composable
+fun App(...) {
+    ...
+    Children() { child ->
+        ,,,
+        is RootComponent.Child.TabsScreen ->
+        TabsScreen(instance.component)
+    }
+}
+```
+
+```kotlin
+@Composable
+fun TabsScreen(
+    tabNavigationComponent: TabNavigationComponent
+) {
+    Scaffold(
+        bottomBar = {
+            Row(
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(onClick = { tabNavigationComponent.onTabOneClick() }) {
+                    Text("TAB ONE")
+                }
+                Button(onClick = { tabNavigationComponent.onTabTwoClick() }) {
+                    Text("TAB TWO")
+                }
+            }
+        }
+    ) { innerPadding ->
+        val childStack = tabNavigationComponent.childStack.subscribeAsState()
+
+        Column(
+            modifier = Modifier.padding(innerPadding),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Children(
+                stack = childStack.value,
+                animation = stackAnimation(slide()),
+            ) { child ->
+                when (val instance = child.instance) {
+                    is TabNavigationComponent.Child.TabOne ->
+                        ThirdScreen(instance.component)
+
+                    is TabNavigationComponent.Child.TabTwo ->
+                        FourthScreen(instance.component)
+                }
+            }
+        }
+    }
+}
+```
+
+***ThirdScreen*** and ***FourthScreen*** are the same, and really simple.
+
+```kotlin
+@Composable
+fun ThirdScreen(
+    component: ThirdScreenComponent
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(component.text)
+    }
+}
+```
+
+![Tab Navigation](/blog/images/4_tab_navigation.gif "Tab Navigation")
+
 ### Summary
-The `Decompose` is a powerful library that can be used in compose multiplatform application that supoorts Android, iOS, WEB and Desktop. It is separated from the UI code and handled by the common shared logic. It's pretty straightforward and easy to use and can be customized to fits your needs. You definitely should give it a try!   
+
+The `Decompose` is a powerful library that can be used in compose multiplatform application that supoorts Android, iOS,
+WEB and Desktop. It is separated from the UI code and handled by the common shared logic. It's pretty straightforward,
+easy to use and can be customized to fits your needs. Nevertheless, it's strongly related to the library internal
+concepts as for example `Components` that forces you to design the app in certain way and limits the possibilities.
+In my point of view the biggest advantage of such approach is the clear boundary between UI and the Navigation, 
+the navigation is now a part of your business logic not the way you build your views, can be easily tested and reused.
+
+If you are looking fora navigation lib for your compose multiplatform project you definitely should give it a try!   
+If you interested in how it work in a bit bigger application take look at my [GitHub](https://github.com/mkonkel/GameShop) for the `GameShop` application.

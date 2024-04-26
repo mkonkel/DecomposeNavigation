@@ -7,6 +7,7 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import navigation.RootComponent
 import screens.FirstScreen
 import screens.SecondScreen
+import screens.TabsScreen
 
 @Composable
 fun App(rootComponent: RootComponent) {
@@ -22,6 +23,10 @@ fun App(rootComponent: RootComponent) {
 
                 is RootComponent.Child.SecondScreen ->
                     SecondScreen(instance.component)
+
+                is RootComponent.Child.TabsScreen ->
+                    TabsScreen(instance.component)
+
             }
         }
     }

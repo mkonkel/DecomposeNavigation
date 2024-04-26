@@ -7,9 +7,10 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushNew
 import kotlinx.serialization.Serializable
+import navigation.tab.TabNavigationComponent
 
 class RootComponent(
-    componentContext: ComponentContext
+    componentContext: ComponentContext,
 ) : ComponentContext by componentContext {
     private val navigation = StackNavigation<Configuration>()
     val childStack = childStack(
@@ -27,8 +28,11 @@ class RootComponent(
                 Child.FirstScreen(
                     component = FirstScreenComponent(
                         componentContext = componentContext,
-                        onButtonClick = { textFromFirstScreen ->
+                        onGoToSecondScreenClick = { textFromFirstScreen ->
                             navigation.pushNew(Configuration.SecondScreen(text = textFromFirstScreen))
+                        },
+                        onGoToTabsScreen = {
+                            navigation.pushNew(Configuration.TabsNavigation)
                         }
                     )
                 )
@@ -41,11 +45,18 @@ class RootComponent(
                     onBackButtonClick = { navigation.pop() }
                 )
             )
+
+            Configuration.TabsNavigation -> Child.TabsScreen(
+                component = TabNavigationComponent(
+                    componentContext = componentContext
+                )
+            )
         }
 
     sealed class Child {
         data class FirstScreen(val component: FirstScreenComponent) : Child()
         data class SecondScreen(val component: SecondScreenComponent) : Child()
+        data class TabsScreen(val component: TabNavigationComponent) : Child()
     }
 
     @Serializable
@@ -55,5 +66,8 @@ class RootComponent(
 
         @Serializable
         data class SecondScreen(val text: String) : Configuration()
+
+        @Serializable
+        data object TabsNavigation : Configuration()
     }
 }

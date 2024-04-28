@@ -417,6 +417,8 @@ class TabNavigationScreen(
 ) : ComponentContext by componentContext
 ```
 
+### Tab navigation
+
 The `TabNavigationScreen` will behave in almost similar way as the ```RootComponent``` it will have its own
 ***childStack***, ***configuration***, ***childFactory*** and will be responsible for creating the child components and
 navigate between them.
@@ -628,14 +630,96 @@ fun ThirdScreen(
 
 ![Tab Navigation](/blog/images/4_tab_navigation.gif "Tab Navigation")
 
-### Summary
+### Coroutines
+
+Since every modern mobile application should be reactive and handle async operations we can use the coroutines. To do so
+we need to create a `CoroutineScope` in the component.
+This is not an out-of-the-box solution as in native ***ViewModel,*** but it is quite simple to handle. As we know from
+the previous part of the article the ***Component*** is lifecycle aware and we can use this feature to manage the
+coroutines.
+
+```kotlin
+class ThirdScreenComponent(
+    componentContext: ComponentContext,
+) : ComponentContext by componentContext {
+    val text = "Hello from ThirdScreen"
+    val countDownText = mutableStateOf<String>("0")
+
+    init {
+        val scope = coroutineScope(Dispatchers.Default + SupervisorJob())
+        scope.launch {
+            for (i in 10 downTo 0) {
+                countDownText.value = i.toString()
+                delay(1000)
+            }
+        }
+    }
+
+
+    private fun CoroutineScope(context: CoroutineContext, lifecycle: Lifecycle): CoroutineScope {
+        val scope = CoroutineScope(context)
+        lifecycle.doOnDestroy(scope::cancel)
+        return scope
+    }
+
+    private fun LifecycleOwner.coroutineScope(context: CoroutineContext): CoroutineScope =
+        CoroutineScope(context, lifecycle)
+}
+```
+
+Or you can use the Decompose compatibility library that provides the `coroutineScope` function that will handle the
+lifecycle for you - [Essently](https://github.com/arkivanov/Essenty).
+
+```kotlin
+[versions]
+essently = "2.0.0"
+
+[libraries]
+essently - coroutines = { module = "com.arkivanov.essenty:lifecycle-coroutines", version.ref = "essently" }
+```
+
+```kotlin
+commonMain.dependencies {
+    ...
+    implementation(libs.essently.coroutines)
+}
+```
+
+```kotlin
+class FourthScreenComponent(
+    componentContext: ComponentContext,
+) : ComponentContext by componentContext {
+    val text = "Hello from FourthScreen"
+    val countDownText = mutableStateOf<String>("0")
+
+    //Essently
+    private val scope = coroutineScope(Dispatchers.Default + SupervisorJob())
+
+    init {
+        scope.launch {
+            for (i in 10 downTo 0) {
+                countDownText.value = i.toString()
+                delay(1000)
+            }
+        }
+    }
+}
+```
+
+If u want to support structured concurrency you should pass the `mainContext: CoroutineContext` to the component instead
+of using `Dispatchers.Default` inside it.
+
+![Coroutines Support](/blog/images/5_coroutines_support.gif "Coroutines Support")
+
+## Summary
 
 The `Decompose` is a powerful library that can be used in compose multiplatform application that supoorts Android, iOS,
 WEB and Desktop. It is separated from the UI code and handled by the common shared logic. It's pretty straightforward,
 easy to use and can be customized to fits your needs. Nevertheless, it's strongly related to the library internal
 concepts as for example `Components` that forces you to design the app in certain way and limits the possibilities.
-In my point of view the biggest advantage of such approach is the clear boundary between UI and the Navigation, 
+In my point of view the biggest advantage of such approach is the clear boundary between UI and the Navigation,
 the navigation is now a part of your business logic not the way you build your views, can be easily tested and reused.
 
 If you are looking fora navigation lib for your compose multiplatform project you definitely should give it a try!   
-If you interested in how it work in a bit bigger application take look at my [GitHub](https://github.com/mkonkel/GameShop) for the `GameShop` application.
+If you interested in how it work in a bit bigger application take look at
+my [GitHub](https://github.com/mkonkel/GameShop) for the `GameShop` application.

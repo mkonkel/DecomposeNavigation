@@ -45,6 +45,7 @@ kotlin {
 
             implementation(libs.decompose)
             implementation(libs.decompose.compose)
+            implementation(libs.essently.coroutines)
             implementation(libs.serialization.json)
         }
     }

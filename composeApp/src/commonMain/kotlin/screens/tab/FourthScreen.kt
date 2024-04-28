@@ -20,5 +20,6 @@ fun FourthScreen(
     ) {
         Text("TAB TWO")
         Text(component.text)
+        Text("COUNTDOWN: ${component.countDownText.value}")
     }
 }

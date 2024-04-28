@@ -15,11 +15,13 @@ compose-plugin = "1.6.1"
 junit = "4.13.2"
 kotlin = "1.9.23"
 decompose = "3.0.0-beta01"
+essently = "2.0.0"
 serialization = "1.6.3"
 
 [libraries]
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-compose = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
+essently-coroutines = { module = "com.arkivanov.essenty:lifecycle-coroutines", version.ref = "essently" }
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }

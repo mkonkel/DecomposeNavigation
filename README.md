@@ -9,7 +9,7 @@ Assumptions:
 - Application should allow to pass some parameters from first to second screen.
 - Application should handle the screen rotation without loosing data.
 - Application should handle the Tab Navigation.
-  ...
+- Application should handle the async operations with coroutines.
 
 In the next posts I will also cover the [Voyager](https://github.com/mkonkel/VoyagerNavigation), Circuit, Apyx and
 Composer navigation libraries.

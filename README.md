@@ -11,7 +11,7 @@ Assumptions:
 - Application should handle the Tab Navigation.
 - Application should handle the async operations with coroutines.
 
-In the next posts I will also cover the [Voyager](https://github.com/mkonkel/VoyagerNavigation), Circuit, Apyx and
+In the next posts I will also cover the [Voyager](https://github.com/mkonkel/VoyagerNavigation), Apyx and
 Composer navigation libraries.
 
 ### The project:

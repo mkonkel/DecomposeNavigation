@@ -720,6 +720,22 @@ concepts as for example `Components` that forces you to design the app in certai
 In my point of view the biggest advantage of such approach is the clear boundary between UI and the Navigation,
 the navigation is now a part of your business logic not the way you build your views, can be easily tested and reused.
 
+Next compose multiplatform navigation library that I can recommend
+is [Voyager](https://github.com/mkonkel/VoyagerNavigation). It is much more cooped to the Compose itself and does not
+focus on the shared common business logic held by its own object (but its also provide a way to do things in same way as
+***Decompose*** does). I think that ***Voyager*** is a bit more flexible in the terms how application will behave and
+how the navigation will look like.
+It is handling the navigation in the UI layer, not only in the shared code - and you need to decide which approach is
+better for you.
+
+Other library for compose multiplatform navigation is [Appyx](https://github.com/mkonkel/AppyxNavigation) that has lot
+of similarities to the Voyager. It also is closely
+connected to compose, and provide a lot of flexible features that can be used in the application. But i find myself more
+comfortable with the Voyager, it is more intuitive.
+
 If you are looking fora navigation lib for your compose multiplatform project you definitely should give it a try!   
-If you interested in how it work in a bit bigger application take look at
+If you interested in how it works in a bit bigger application take look at
 my [GitHub](https://github.com/mkonkel/GameShop) for the `GameShop` application.
+
+To sum things up, the `Decompose` is a great library that can be used in compose multiplatform projects, and the
+approach proposed by the creators of the lib suits me well. It is a great way to separate the navigation from the UI.

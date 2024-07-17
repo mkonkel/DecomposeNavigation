@@ -23,7 +23,7 @@ fun SecondScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("First screen")
+        Text("Second screen")
         Spacer(modifier = Modifier.height(16.dp))
         Text("Greetings: ${component.getGreeting()}")
         Button(onClick = { component.goBack() }) {

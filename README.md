@@ -1,6 +1,6 @@
 # Decompose Navigation
 
-This is a Kotlin Multiplatform project targeting Android and iOS where we will showcase the Decompose as the app
+This is a Kotlin Multiplatform project targeting Android and iOS where I will showcase the Decompose as the app
 navigation.
 
 Assumptions:
@@ -11,13 +11,13 @@ Assumptions:
 - Application should handle the Tab Navigation.
 - Application should handle the async operations with coroutines.
 
-In the next posts I will also cover the [Voyager](https://github.com/mkonkel/VoyagerNavigation), Apyx and
-Composer navigation libraries.
+In the next posts I will also cover the [Voyager](https://github.com/mkonkel/VoyagerNavigation), [Apyx](https://github.com/mkonkel/AppyxNavigation) and
+JetpackCompose navigation libraries.
 
 ### The project:
 
 Base project setup as always is made with [Kotlin Multiplatform Wizard](https://kmp.jetbrains.com), we also need to add
-some [Decompose](https://arkivanov.github.io/Decompose/getting-started/installation/#__tabbed_1_2) as it is the core
+some [Decompose](https://arkivanov.github.io/Decompose/) as it is the core
 thing that we would like to examine.
 There is also one thing that we need to add to the project and that is
 the [Kotlin Serialization](https://github.com/Kotlin/kotlinx.serialization) plugin.
